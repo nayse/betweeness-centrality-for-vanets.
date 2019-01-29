@@ -1,0 +1,319 @@
+# -*- coding: utf-8 -*-
+
+import pickle as cPickle
+import numpy as np
+import random
+from os import chdir
+import numpy as np
+#from joblib import Parallel, delayed
+import multiprocessing
+import copy
+from scipy.sparse import lil_matrix
+
+num_cores = multiprocessing.cpu_count() # quantidade de cpus que vao rodar
+
+T_VEICULOS	= 175
+T_INTERSEC	= 4
+
+##########################################
+# configuracoes do algoritmo
+##########################################
+K                       = 5 # quantidade de RSUs a implantar
+TAU             = 30 # tempo minimo de contato
+A = round(T_INTERSEC * 0.05) # quantidade de cruzamentos selecionados pelo betweenness (5% dos cruzamentos)
+# 
+POPULACAO	= 4 # tamanho da populacao
+GERACAO         = 10 # numero maximo de geracoes
+TORNEIO         = 2 # tamanho do torneio
+MUTACAO         = 0.1 # taxa de mutacao
+CRUZAMENTO	= 0.95 # taxa de cruzamento
+
+REPLICACOES = 10 # numero de vezes que ira replicar o experimento
+
+arquivo = "C:\\Users\\Nayse\\Desktop\\temp_betweennessA6.txt" # arquivo contendo os cruzamentos selecionados pelo betweennness
+ # numero de comunidades detectadas pelo louvain
+##########################################
+
+dadosOut1 = open("algoritmogenetico.txt",'w')
+
+busca = []
+local = []
+
+
+refinacoes = 0
+gera = 0
+melhor = None
+
+	
+
+class Individuo(object):
+	def __init__(self):
+		self.genes = []
+		self.fitness = None
+		self.clustering = None
+
+	def add(self, gene):
+		if not self.genes.__contains__(gene):
+			self.genes.append(gene)
+			return True
+		return False
+	def pertence(self, populacao):
+		for i in populacao:
+			if i.genes == self.genes:
+				return True
+		return False
+
+
+# geracao da populacao inicial
+def inicial():
+	
+	populacao = []
+	
+	i = 0
+	
+	# carrega cruzamentos
+	output = open(arquivo, "r")
+	
+	k = A
+	output = output.readlines()
+
+	cruzamentos = []
+	melhor = Individuo()
+	
+	for o in output:
+		linha = o.split("\n")[0]
+		cruz = linha.split(" ")[1]
+		index = linha.split(" ")[0]
+		index = int(index) - 1
+		
+		cruzamentos.append((cruz))
+		busca.append((cruz))
+		k -= 1
+		if k == 0:
+			break
+	
+	#########################
+	# geração dos individuos
+	while i < POPULACAO:
+		individuo = Individuo()
+		
+		j = 0
+		while j < K:
+			gene = random.choice(cruzamentos)
+			if individuo.add(gene):
+				j += 1
+		individuo.genes.sort()
+		#if not individuo.pertence(populacao):
+		populacao.append(individuo)
+		i += 1		
+	
+	return populacao
+
+
+
+def torneio(populacao):
+
+	selecao = []
+
+	i = 0
+	while i < TORNEIO:
+		novo = random.choice(populacao)
+
+		if not novo in selecao:
+			selecao.append(novo)
+			i += 1
+
+	selecao.sort(key=lambda x : x.fitness, reverse=True)
+
+	return selecao[0]
+
+
+# calculo da funcao fitness
+def fitness(individuo, a):
+	X = {}
+
+	cobertura = 0
+
+	for i in individuo.genes:
+		try:
+			for j in [i]:
+				if j in X:
+					X[j] += [i, j]
+				else:
+					X[j] = [i, j]
+		except KeyError:
+			pass
+
+	for v in X:
+		if X[v] >= TAU:
+			cobertura += 1
+	saida = float(cobertura)/T_VEICULOS
+	#print("fitness",a,"/",POPULACAO," = ",saida)
+	return (a, saida)
+
+
+# cruzamento pontual
+def cruzamento(pai, mae):
+	ponto = random.randint(0, len(pai.genes) - 1)
+
+	genes = pai.genes[0:ponto] + mae.genes[ponto:]
+
+	genes.sort()
+
+	filho = Individuo()
+	filho.genes = genes
+
+	for i in filho.genes:
+		if filho.genes.count(i) > 1:
+			return None
+
+	return filho
+
+# mutacao pontual
+def mutacao(individuo):
+	ponto = random.randint(0, len(individuo.genes) - 1)
+	gene = random.choice(busca)
+	
+	if gene in individuo.genes:
+		return None
+	
+	individuo.genes[ponto] = gene
+	individuo.genes.sort()
+	return individuo
+	
+
+def selecao(populacao):
+	pai = torneio(populacao)
+	mae = torneio(populacao)
+	if pai != mae:
+		#cruzamento
+		if random.random() <= CRUZAMENTO:
+			filho = cruzamento(pai, mae)
+			while filho == None:
+				filho = cruzamento(pai, mae)
+			return filho
+	return None
+
+
+def refinar(individuo, posicao):
+	gene = individuo.genes[posicao]
+	
+	index = None
+	
+
+
+# algoritmo genetico
+def genetico(k, tau):
+	global refinacoes, gera, melhor
+	refinacoes = 0
+	gera = 0
+	melhor = None
+	
+	#print(".:: BEGIN ::.\n")
+
+	output = []
+
+	populacao = inicial()
+
+	melhor = None
+
+	#print("Fitness")
+	results = ((fitness)(populacao[i], i) for i in range(0, len(populacao)))
+	for i in results:
+		populacao[i[0]].fitness = i[1]
+
+	populacao.sort(key=lambda x : x.fitness, reverse=True)
+	#print("[Fitness] =",populacao[0].fitness)
+	#print(populacao[0].genes)
+	geracao = 0
+
+
+
+	while geracao <= GERACAO:
+		#print("<-------- Geracao",geracao,"----------->")
+
+		#selecao por torneio
+		nPopulacao = []
+		i = 0
+		#print("seleca/cruzamento")
+		while i < POPULACAO - 1:
+			pai = torneio(populacao)
+			mae = torneio(populacao)
+			if pai != mae:
+				#cruzamento
+				if random.random() <= CRUZAMENTO:
+					filho = cruzamento(pai, mae)
+					while filho == None:
+						filho = cruzamento(pai, mae)
+					#if not filho.pertence(nPopulacao):
+					nPopulacao.append(filho)
+					i += 1
+
+		# mutacao
+		#print("mutação")
+		for i in range(0, len(nPopulacao)):
+			if random.random() <= MUTACAO:
+				novo = mutacao(nPopulacao[i])
+				while novo == None:
+					novo = mutacao(nPopulacao[i])
+				#if not novo.pertence(nPopulacao):
+				nPopulacao[i] = novo
+
+
+		# eletismo transfere o melhor individuo para a nova
+		# populacao
+
+		#print("eletismo")
+		elitista = populacao[0]
+		nPopulacao.append(elitista)
+
+		populacao = nPopulacao
+
+		#print("calculando fitness")
+		results = ((fitness)(populacao[i], i) for i in range(0, len(populacao)))
+		for i in results:
+			populacao[i[0]].fitness = i[1]
+
+
+		populacao.sort(key=lambda x : x.fitness, reverse=True)
+		
+		#print("[Fitness] =",populacao[0].fitness)
+		#print populacao[0].genes
+		#print "\nRefinando o melhor..."
+		
+		if melhor != populacao[0].genes:
+			gera = geracao
+			melhor = populacao[0].genes
+		
+		ref = list(range(0, len(populacao[0].genes)))
+		
+		if len(ref) > 0:
+			gene = random.choice(ref)
+			
+			#print("refinar",gene)
+			ref.remove(gene)
+				
+			refinacao = refinar(populacao[0], gene)
+			if refinacao != None:
+				#if not refinacao.pertence(nPopulacao):
+				populacao[0] = refinacao
+					#print("OK!")
+				refinacoes += 1
+					#break
+
+		#print("[Fitness] =",populacao[0].fitness)
+		print("%d;%s;%f;%d;%d" %(geracao, populacao[0].genes, populacao[0].fitness, gera, refinacoes))
+		geracao += 1
+		#print(populacao[0].genes)
+
+	return populacao[0]
+
+
+
+
+#################################################################
+
+
+for i in range(REPLICACOES):
+	solucao = genetico(K, TAU)
+
