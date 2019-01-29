@@ -6,9 +6,9 @@ from random import random
 import time
 
 dadosIn = open("C:\\Users\\Nayse\\Desktop\\communities24T.txt", "r")
-vertex = open("C:\\Users\\Nayse\\Desktop\\mnt.txt",'r')
+vertex = open("C:\\Users\\Nayse\\Desktop\\vertices.txt",'r')
 
-dadosOut1 = open("colonia1.txt",'w')
+dadosOut1 = open("Btw_comunities.txt",'w')
 
 if __name__ == "__main__":
       
