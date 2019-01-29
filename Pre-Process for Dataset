@@ -5,7 +5,7 @@ timeFinish = 28800 #tempo final do dataset
 nextTime = 60 # intervalo de "salto" 
 
 #arquivo de saída (grafo gerado)
-dadosOut = open("grafo.txt",'w')
+dadosOut = open("communities24T.txt",'w')
 
 t = 1
 while True:
