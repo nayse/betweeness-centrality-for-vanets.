@@ -1,4 +1,4 @@
-data <- read.table("C:\\Users\\Nayse\\Desktop\\M40.txt", head = T)
+data <- read.table("C:\\Users\\Nayse\\Desktop\\communities24T.txt", head = T)
 df <- union(data$VertexFrom, data$VertexTo)
 
-write.table(df,"C:\\Users\\Nayse\\Desktop\\mnt.txt", quote = F, row.names = F, col.names = F)
+write.table(df,"C:\\Users\\Nayse\\Desktop\\vertices.txt", quote = F, row.names = F, col.names = F)
