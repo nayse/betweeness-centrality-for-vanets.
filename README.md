@@ -4,3 +4,4 @@ Artigo base sobre métricas temporais: https://www.cl.cam.ac.uk/~rja14/Papers/Te
 
 Dataset advindo do projeto TAPASCologne: https://sourceforge.net/projects/sumo/files/traffic_data/scenarios/TAPASCologne/ / http://kolntrace.project.citi-lab.fr/
 
+Dataset de Colonia: http://kolntrace.project.citi-lab.fr/
