@@ -36,14 +36,14 @@ if __name__ == "__main__":
     for a,b in temp_betweenness.items():
         dadosOut1.write(str(b)+"\n")
         
-    #print("[=>] Calculando closeness Temporal")
-    #temp_closeness = compute_temporal_closeness(G,0,et)
-    #for v in G.vertices:
+    print("[=>] Calculando closeness Temporal")
+    temp_closeness = compute_temporal_closeness(G,0,et)
+    for v in G.vertices:
         #dadosOut2.write(str(v) + " " + str(temp_closeness[v]) + "\n")   
     
-    #print("[=>] Calculando closeness Agregado")
-    #agg_closeness = compute_static_graph_statistics(G,0,et)
-    #for v in G.vertices:
+    print("[=>] Calculando closeness Agregado")
+    agg_closeness = compute_static_graph_statistics(G,0,et)
+    for v in G.vertices:
         #dadosOut3.write(str(v) + " " + str(agg_closeness[0][1][v]) + "\n")
     
     dadosIn.close()
