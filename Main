@@ -4,6 +4,7 @@ from temporal_graph import *
 from math import sqrt
 from random import random
 import time
+import numpy as np
 
 dadosIn = open("C:\\Users\\Nayse\\Desktop\\communities24T.txt", "r")
 vertex = open("C:\\Users\\Nayse\\Desktop\\vertices.txt",'r')
