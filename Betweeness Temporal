@@ -4,6 +4,7 @@ import networkx as nx
 import numpy as np
 from sets import Set
 from numpy import inf
+import math
 
 class temporal_graph:
     # construct a temporal network that has snapshots from time 0 until time t_end
